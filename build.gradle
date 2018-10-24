@@ -26,8 +26,10 @@ intellij {
     version '2017.3.2'
     updateSinceUntilBuild = false
     downloadSources = true
+    //本插件名称
     pluginName = 'gitpullextender'
     //comma separated list of plugins to depend on
+    // 引用intellij的插件
     plugins = ['git4idea']
 }
 

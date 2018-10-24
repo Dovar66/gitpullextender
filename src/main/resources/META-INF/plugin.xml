@@ -18,6 +18,7 @@
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
     <idea-version since-build="163"/>
 
+    <!--添加依赖-->
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.modules.vcs</depends>
     <depends>Git4Idea</depends>
@@ -27,12 +28,12 @@
         <!-- provider for the configurable instance ( configuration settings ) -->
     </extensions>
 
-
     <actions>
         <!-- Add your actions here -->
         <action id="com.dovar.pullall" class="com.dovar.gitextender.GitPullAllAction"
                 text="Git Pull Extender -&gt; Pull All"
                 description="Pull all locally tracked currentBranch of all modules in the project">
+            <!--配置action的展示位置，vcs->git->第一个位置-->
             <add-to-group group-id="Git.Menu" anchor="first"/>
         </action>
     </actions>

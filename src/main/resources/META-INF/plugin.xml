@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.dovar.gitpullextender</id>
     <name>Git Pull Extender</name>
-    <vendor email="xiaohe0949@163.com" url="https://github.com/Dovar66/plugin_gitpull">Dovar</vendor>
+    <vendor email="xiaohe0949@163.com" url="https://github.com/Dovar66/gitpullextender">Dovar</vendor>
 
     <description><![CDATA[
         Git Pull项目下所有仓库的当前分支.<br/>

@@ -1,0 +1,39 @@
+buildscript {
+    repositories {
+        maven { url 'https://dl.bintray.com/jetbrains/intellij-plugin-service' }
+    }
+}
+
+plugins {
+    id 'org.jetbrains.intellij' version '0.3.12'
+}
+
+group 'com.dovar'
+version '1.0'
+
+apply plugin: 'java'
+sourceCompatibility = 1.8
+targetCompatibility = '1.8'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+}
+
+intellij {
+    version '2017.3.2'
+    updateSinceUntilBuild = false
+    downloadSources = true
+    pluginName = 'gitpullextender'
+    //comma separated list of plugins to depend on
+    plugins = ['git4idea']
+}
+
+publishPlugin {
+    //no auto-publishing for now
+    username ''
+    password ''
+    channels 'alpha'
+}

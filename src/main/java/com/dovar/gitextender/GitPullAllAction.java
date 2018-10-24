@@ -1,9 +1,11 @@
 package com.dovar.gitextender;
 
+import com.dovar.gitextender.ui.GitMultiPullDialog;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -17,6 +19,7 @@ import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.vcsUtil.VcsImplUtil;
 import git4idea.*;
 import git4idea.commands.*;
 import git4idea.merge.GitMergeUtil;
@@ -33,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+
 
 public class GitPullAllAction extends AnAction {
 
@@ -55,7 +60,21 @@ public class GitPullAllAction extends AnAction {
             NotificationUtil.showErrorNotification("Update Failed", "Git Pull Extender could not find any repositories in the current project");
             return;
         }
-        for (GitRepository repository : gitRoots
+
+        //选择想要Pull的仓库
+        boolean proceedToUpdate = showSelectModuleDialog(project, gitRoots);
+        if (!proceedToUpdate) {
+            NotificationUtil.showInfoNotification("Update Canceled", "update was canceled");
+            return;
+        }
+
+        List<GitRepository> reposToUpdate = getSelectedGitRepos(gitRoots, GitMultiPullDialog.loadSelectedModules(PropertiesComponent.getInstance(project)));
+        if (reposToUpdate.isEmpty()) {
+            NotificationUtil.showInfoNotification("Update Canceled", "no modules selected in dialog");
+            return;
+        }
+
+        for (GitRepository repository : reposToUpdate
                 ) {
             if (repository == null) {
                 continue;
@@ -70,19 +89,25 @@ public class GitPullAllAction extends AnAction {
             }
             //获取当前分支对应的远程分支
             GitBranchTrackInfo trackInfo = GitUtil.getTrackInfoForCurrentBranch(repository);
+            StringBuilder tips = new StringBuilder("Pulling changes from ");
             if (trackInfo != null) {
+                tips.append(trackInfo.getRemoteBranch().getName())
+                        .append(" branch:").append(trackInfo.getLocalBranch().getName());
                 remote = trackInfo.getRemote();
             } else {
                 GitRemote origin = GitUtil.getDefaultRemote(remotes);
                 remote = origin != null ? origin : (GitRemote) remotes.iterator().next();
-            }
-            if (remote == null) {
-                continue;
+                if (remote == null) {
+                    continue;
+                }
+                GitLocalBranch localBranch = repository.getCurrentBranch();
+                tips.append(remote.getName())
+                        .append(" branch:").append(localBranch == null ? "null" : localBranch.getName());
             }
             final Computable<GitLineHandler> handlerProvider = () -> makeHandler(remote, root, project, trackInfo);
             final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before update");
-            GitLocalBranch localBranch = repository.getCurrentBranch();
-            (new Task.Backgroundable(project, "Pulling changes from " + remote.getName() + " branch:" + (localBranch == null ? "null" : localBranch.getName()), true) {
+
+            (new Task.Backgroundable(project, tips.toString(), true) {
                 public void run(@NotNull ProgressIndicator indicator) {
                     GitLocalChangesWouldBeOverwrittenDetector localChangesDetector = new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE);
                     GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(root);
@@ -112,6 +137,16 @@ public class GitPullAllAction extends AnAction {
                 }
             }).queue();
         }
+    }
+
+    private boolean showSelectModuleDialog(Project project, List<GitRepository> repositories) {
+        if (repositories.size() <= 1) {
+            //single git repo in project, no need for displaying
+            return true;
+        }
+
+        GitMultiPullDialog selectModuleDialog = new GitMultiPullDialog(project, repositories);
+        return selectModuleDialog.showAndGet();
     }
 
     private void handleResult(GitCommandResult result, Project project, GitSimpleEventDetector mergeConflictDetector, GitLocalChangesWouldBeOverwrittenDetector localChangesDetector, GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector, GitRepository repository, GitRevisionNumber currentRev, Label beforeLabel) {
@@ -202,5 +237,19 @@ public class GitPullAllAction extends AnAction {
             NotificationUtil.showErrorNotification("getGitRepositoryManager", "exception caught while trying to get git repository manager");
             return null;
         }
+    }
+
+    private static List<GitRepository> getSelectedGitRepos(List<GitRepository> repos, List<String> selectedModules) {
+        if (repos.size() <= 1) {
+            return repos;
+        }
+
+        return repos.stream()
+                .filter(repo -> selectedModules.contains(getRepoName(repo)))
+                .collect(Collectors.toList());
+    }
+
+    public static String getRepoName(GitRepository repo) {
+        return VcsImplUtil.getShortVcsRootName(repo.getProject(), repo.getRoot());
     }
 }

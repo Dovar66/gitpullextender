@@ -70,7 +70,7 @@ public class GitPullAllAction extends AnAction {
 
         List<GitRepository> reposToUpdate = getSelectedGitRepos(gitRoots, GitMultiPullDialog.loadSelectedModules(PropertiesComponent.getInstance(project)));
         if (reposToUpdate.isEmpty()) {
-            NotificationUtil.showInfoNotification("Update Canceled", "no modules selected in dialog");
+            NotificationUtil.showInfoNotification("Update Canceled", "no repository selected in dialog");
             return;
         }
 

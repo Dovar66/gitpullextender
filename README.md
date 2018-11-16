@@ -65,4 +65,5 @@ plugin.xml此时的内容如下图：
 使用Gradle开发只是插件开发方式中的一种，另一种方式则是使用DevKit开发，具体请点击下方地址查看官方文档
 
 IntelliJ插件开发的官方文档地址：[点击跳转](http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/prerequisites.html)
+<a href="http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/prerequisites.html" target="_blank">点击跳转</a>
 
